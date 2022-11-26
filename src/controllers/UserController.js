@@ -1,4 +1,4 @@
-let users = require('../mocks/users');
+const users = require('../mocks/users');
 
 module.exports = {
   index(request, response) {
@@ -42,7 +42,11 @@ module.exports = {
   },
   destroy(request, response) {
     const id = Number(request.params.id);
-    users = users.filter(user => user.id !== id);
+    const userIndex = users.findIndex(user => user.id === id);
+    if (userIndex < 0) {
+      return response.send(404, { error: 'User not found' });
+    }
+    users.splice(userIndex, 1);
     return response.send(204);
   }
 };
