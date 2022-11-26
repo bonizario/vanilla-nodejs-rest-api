@@ -1,22 +1,45 @@
+// Import Node.js built-in modules
 const http = require('node:http');
 const { URL } = require('node:url');
 
+// Import all the available routes
 const routes = require('./routes');
 
+// Specify the port the server will run on
+const PORT = 3333;
+// Create an HTTP server
 const server = http.createServer((request, response) => {
-  const parsedUrl = new URL(`http://localhost:3333${request.url}`);
+  // Parse the URL to separate params from the pathname
+  const parsedUrl = new URL(`http://localhost:${PORT}${request.url}`);
+  let id = null, { pathname } = parsedUrl;
+  // Split endpoint to retrieve the :id route param and filter the first element ('')
+  const splitEndpoint = pathname.split('/').filter(Boolean);
+  if (splitEndpoint.length > 1) {
+    pathname = `/${splitEndpoint[0]}/:id`;
+    id = splitEndpoint[1];
+  }
+  // Find the route the request was made on
   const route = routes.find(routeObj => (
-    routeObj.endpoint === parsedUrl.pathname && routeObj.method === request.method
+    routeObj.endpoint === pathname && routeObj.method === request.method
   ));
+  // If the specified endpoint exists
   if (route) {
+    // Inject query params into the request
+    // (searchParams is an iterable and fromEntries() converts it into an Object)
     request.query = Object.fromEntries(parsedUrl.searchParams);
+    // Inject route params into the request
+    request.params = { id };
+    // Return the handler response
     route.handler(request, response);
   } else {
+    // Write the statusCode and Content-Type header in the response
     response.writeHead(404, { 'Content-Type': 'text/html' });
+    // End the response with an error message
     response.end(`Cannot ${request.method} ${parsedUrl.pathname}`);
   }
 });
 
-server.listen(3333, () => {
-  console.log('Server is running at http://localhost:3333');
+// Start a server listening for connections
+server.listen(PORT, () => {
+  console.log(`Server is running at http://localhost:${PORT}`);
 });
