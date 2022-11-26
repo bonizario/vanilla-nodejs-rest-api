@@ -2,6 +2,8 @@
 const http = require('node:http');
 const { URL } = require('node:url');
 
+// Import bodyParser helper
+const bodyParser = require('./helpers/bodyParser');
 // Import all the available routes
 const routes = require('./routes');
 
@@ -34,8 +36,12 @@ const server = http.createServer((request, response) => {
       response.writeHead(statusCode, { 'Content-Type': 'application/json' });
       response.end(JSON.stringify(body));
     };
-    // Return the handler response
-    route.handler(request, response);
+    if (['POST', 'PUT', 'PATCH'].includes(request.method)) {
+      bodyParser(request, () => route.handler(request, response));
+    } else {
+      // Return the handler response
+      route.handler(request, response);
+    }
   } else {
     // Write the statusCode and Content-Type header in the response
     response.writeHead(404, { 'Content-Type': 'text/html' });
