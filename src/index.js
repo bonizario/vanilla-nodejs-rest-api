@@ -29,13 +29,18 @@ const server = http.createServer((request, response) => {
     request.query = Object.fromEntries(parsedUrl.searchParams);
     // Inject route params into the request
     request.params = { id };
+    // Inject send method into the reponse
+    response.send = (statusCode, body) => {
+      response.writeHead(statusCode, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify(body));
+    };
     // Return the handler response
     route.handler(request, response);
   } else {
     // Write the statusCode and Content-Type header in the response
     response.writeHead(404, { 'Content-Type': 'text/html' });
     // End the response with an error message
-    response.end(`Cannot ${request.method} ${parsedUrl.pathname}`);
+    return response.end(`Cannot ${request.method} ${parsedUrl.pathname}`);
   }
 });
 
